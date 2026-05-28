@@ -294,31 +294,3 @@ Examples:
 | Always distinguish facts from assumptions. | `AGENTS.md` |
 | Run a read-only security review. | Subagent or skill, depending on how separate it needs to be |
 
-## Recommended future skills
-
-Useful skills to add later:
-
-- statistical-methods-reviewer
-- simulation-benchmark-designer
-- bioinformatics-pipeline-reviewer
-- paper-deep-dive
-- math-derivation-checker
-- hpc-slurm-workflow
-- git-reproducible-workflow
-- latex-methods-writer
-
-Add these one at a time. A skill is useful only if it captures repeated work.
-
-## Operating principle
-
-Do not build a giant artificial scientist prompt.
-
-Build a small, inspectable system:
-
-    clear default behavior
-    focused skills
-    version-controlled rules
-    safe execution defaults
-    explicit verification
-
-That is the workflow this repo is meant to support.
