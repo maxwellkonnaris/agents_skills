@@ -1,0 +1,234 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_URL="${SILVERMAN_REFS_REPO:-git@github.com:Silverman-Lab/references.git}"
+BRANCH="${SILVERMAN_REFS_BRANCH:-main}"
+REF_ROOT="${SILVERMAN_REFS_ROOT:-$HOME/.cache/codex/silverman_references}"
+REF_PATH="${SILVERMAN_REFS_PATH:-articles}"
+ARTICLES_DIR="${REF_ROOT}/${REF_PATH}"
+
+usage() {
+  cat <<EOF
+Usage:
+  search_references "query terms"
+  search_references --sync
+  search_references --path
+  search_references --files "query terms"
+  search_references --reset-cache
+
+Environment overrides:
+  SILVERMAN_REFS_REPO     Default: git@github.com:Silverman-Lab/references.git
+  SILVERMAN_REFS_BRANCH   Default: main
+  SILVERMAN_REFS_ROOT     Default: \$HOME/.cache/codex/silverman_references
+  SILVERMAN_REFS_PATH     Default: articles
+
+Examples:
+  search_references "Dirichlet multinomial"
+  search_references --files "microbiome covariance"
+  search_references --sync
+  search_references --reset-cache
+EOF
+}
+
+ensure_git_lfs() {
+  if command -v git-lfs >/dev/null 2>&1 || git lfs version >/dev/null 2>&1; then
+    return 0
+  fi
+
+  echo "git-lfs is not available in PATH."
+  echo "Trying to install git-lfs into the active conda/micromamba environment."
+  echo
+
+  if command -v micromamba >/dev/null 2>&1; then
+    micromamba install -y -c conda-forge git-lfs
+  elif command -v mamba >/dev/null 2>&1; then
+    mamba install -y -c conda-forge git-lfs
+  elif command -v conda >/dev/null 2>&1; then
+    conda install -y -c conda-forge git-lfs
+  else
+    echo "ERROR: git-lfs is required, but micromamba, mamba, and conda were not found."
+    echo "Install git-lfs manually, then rerun:"
+    echo "  search_references --sync"
+    exit 1
+  fi
+
+  hash -r || true
+
+  if ! command -v git-lfs >/dev/null 2>&1 && ! git lfs version >/dev/null 2>&1; then
+    echo "ERROR: attempted to install git-lfs, but it is still not available in PATH."
+    echo "Try activating the environment again, then rerun:"
+    echo "  search_references --sync"
+    exit 1
+  fi
+}
+
+reset_cache() {
+  if [[ -d "$REF_ROOT" ]]; then
+    echo "Removing cached references clone:"
+    echo "  $REF_ROOT"
+    rm -rf "$REF_ROOT"
+  else
+    echo "No cache found at:"
+    echo "  $REF_ROOT"
+  fi
+}
+
+ensure_repo() {
+  ensure_git_lfs
+
+  git lfs install --skip-repo >/dev/null
+
+  mkdir -p "$(dirname "$REF_ROOT")"
+
+  if [[ -d "$REF_ROOT" && ! -d "$REF_ROOT/.git" ]]; then
+    echo "Found incomplete cache without .git. Removing:"
+    echo "  $REF_ROOT"
+    rm -rf "$REF_ROOT"
+  fi
+
+  if [[ ! -d "$REF_ROOT/.git" ]]; then
+    echo "Cloning private references repo:"
+    echo "  $REPO_URL"
+    echo "into:"
+    echo "  $REF_ROOT"
+    echo
+
+    git clone --filter=blob:none --sparse --branch "$BRANCH" "$REPO_URL" "$REF_ROOT"
+
+    cd "$REF_ROOT"
+    git lfs install --local >/dev/null
+    git sparse-checkout set "$REF_PATH"
+    git lfs pull --include="${REF_PATH}/**"
+  else
+    echo "Updating cached private references repo:"
+    echo "  $REF_ROOT"
+    echo
+
+    cd "$REF_ROOT"
+    git lfs install --local >/dev/null
+    git fetch origin "$BRANCH"
+    git checkout "$BRANCH"
+    git pull --ff-only origin "$BRANCH"
+    git sparse-checkout set "$REF_PATH"
+    git lfs pull --include="${REF_PATH}/**"
+  fi
+
+  if [[ ! -d "$ARTICLES_DIR" ]]; then
+    echo "ERROR: expected references path does not exist:"
+    echo "  $ARTICLES_DIR"
+    exit 1
+  fi
+}
+
+search_filenames() {
+  local query="$1"
+
+  echo "Filename matches:"
+  echo
+
+  find "$ARTICLES_DIR" -type f | awk -v q="$query" '
+    BEGIN { q_lower = tolower(q); found = 0 }
+    {
+      line_lower = tolower($0)
+      if (index(line_lower, q_lower) > 0) {
+        print $0
+        found = 1
+      }
+    }
+    END {
+      if (found == 0) {
+        print "No filename matches."
+      }
+    }
+  '
+}
+
+search_text() {
+  local query="$1"
+
+  echo
+  echo "Text matches in readable files:"
+  echo
+
+  if command -v rg >/dev/null 2>&1; then
+    rg -i --hidden \
+      --glob '!*.pdf' \
+      --glob '!*.png' \
+      --glob '!*.jpg' \
+      --glob '!*.jpeg' \
+      --glob '!*.tif' \
+      --glob '!*.tiff' \
+      --glob '!*.zip' \
+      --glob '!*.rds' \
+      --glob '!*.RData' \
+      "$query" "$ARTICLES_DIR" || true
+  else
+    grep -RIn -i \
+      --exclude='*.pdf' \
+      --exclude='*.png' \
+      --exclude='*.jpg' \
+      --exclude='*.jpeg' \
+      --exclude='*.tif' \
+      --exclude='*.tiff' \
+      --exclude='*.zip' \
+      --exclude='*.rds' \
+      --exclude='*.RData' \
+      "$query" "$ARTICLES_DIR" || true
+  fi
+}
+
+if [[ $# -eq 0 ]]; then
+  usage
+  exit 1
+fi
+
+case "${1:-}" in
+  -h|--help)
+    usage
+    exit 0
+    ;;
+  --reset-cache)
+    reset_cache
+    exit 0
+    ;;
+  --sync)
+    ensure_repo
+    echo
+    echo "References are current."
+    echo "Path:"
+    echo "  $ARTICLES_DIR"
+    echo
+    echo "Commit:"
+    cd "$REF_ROOT"
+    git rev-parse --short HEAD
+    echo
+    echo "Git LFS:"
+    git lfs version
+    exit 0
+    ;;
+  --path)
+    ensure_repo >/dev/null
+    echo "$ARTICLES_DIR"
+    exit 0
+    ;;
+  --files)
+    shift
+    if [[ $# -eq 0 ]]; then
+      echo "ERROR: --files requires query terms."
+      exit 1
+    fi
+    QUERY="$*"
+    ensure_repo >/dev/null
+    search_filenames "$QUERY"
+    exit 0
+    ;;
+  *)
+    QUERY="$*"
+    ensure_repo >/dev/null
+    echo "References path:"
+    echo "  $ARTICLES_DIR"
+    echo
+    search_filenames "$QUERY"
+    search_text "$QUERY"
+    ;;
+esac

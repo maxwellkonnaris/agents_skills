@@ -1,0 +1,9 @@
+
+# Private/local reference caches
+.cache/
+silverman_references/
+private_references/
+references/
+articles/
+*.pdf
+*.epub
