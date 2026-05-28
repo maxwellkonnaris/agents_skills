@@ -294,3 +294,200 @@ Examples:
 | Always distinguish facts from assumptions. | `AGENTS.md` |
 | Run a read-only security review. | Subagent or skill, depending on how separate it needs to be |
 
+## Token-efficient Codex workflows
+
+The goal is not to minimize tokens at all costs. The goal is to maximize useful context per token.
+
+Codex works best when context is layered:
+
+    AGENTS.md
+      Small, always-on rules.
+
+    Skills
+      Focused workflows loaded only when relevant.
+
+    References
+      Longer background files searched or opened only when needed.
+
+    Scripts
+      Deterministic helpers for search, audit, testing, and verification.
+
+    Prompt
+      The immediate task: goal, context, constraints, and done-when criteria.
+
+### What spends tokens
+
+The main token costs are:
+
+- always-loaded instructions, especially `AGENTS.md`
+- selected skill bodies
+- task prompts
+- files Codex reads
+- command output
+- logs
+- diffs
+- model output
+- subagents or parallel workers
+
+The biggest avoidable waste is usually not `AGENTS.md`. It is dumping huge files, huge logs, full PDFs, or entire repositories into context.
+
+### Rules for efficient context
+
+Prefer targeted inspection over broad dumping.
+
+Good:
+
+    git status --short
+    git diff --stat
+    git diff --name-only
+    rg "pattern" path/
+    sed -n '120,220p' file.R
+    tail -n 100 slurm_logs/job.err
+    grep -n -A 20 -B 10 "Error" file.log
+
+Avoid:
+
+    cat huge_log.out
+    cat entire_large_file.R
+    ls -R .
+    reading full PDFs before searching
+    printing every generated output file
+
+### How to write efficient prompts
+
+Use this structure:
+
+    Goal:
+      What should Codex accomplish?
+
+    Context:
+      What repo, files, error, branch, or workflow matters?
+
+    Constraints:
+      What should Codex avoid changing?
+
+    Done when:
+      What output, test, commit, or check proves the task is complete?
+
+Example:
+
+    Goal:
+      Audit this R package for scientific correctness.
+
+    Context:
+      Focus on R/, DESCRIPTION, tests/, README, parser contracts, and package API.
+
+    Constraints:
+      Do not edit files yet. Do not touch large data files. Work in scratch.
+
+    Done when:
+      Return major issues, smallest safe first PR, tests to add, and files not to touch.
+
+### AGENTS.md policy
+
+Keep `AGENTS.md` short because it is always loaded.
+
+Use it for:
+
+- durable behavior rules
+- safety rules
+- coding preferences
+- verification expectations
+- stable project conventions
+
+Do not use it for:
+
+- long tutorials
+- full workflows
+- domain textbooks
+- giant examples
+- every edge case
+
+If a rule becomes a procedure, move it into a skill.
+
+### Skill policy
+
+Use focused skills instead of one giant skill.
+
+Good:
+
+    statistical-methods-reviewer
+    math-derivation-checker
+    paper-deep-dive
+    literature-map
+    hpc-slurm-workflow
+    git-reproducible-workflow
+
+Bad:
+
+    one huge general scientist skill that tries to do everything
+
+A good skill has:
+
+- a precise name
+- a trigger-oriented description
+- one repeatable workflow
+- clear rules
+- clear output format
+- optional scripts or references
+
+### Reference policy
+
+Search first. Read later.
+
+For article repositories, papers, logs, or private references:
+
+    metadata -> search -> relevant snippets -> targeted file read -> summary
+
+Do not bulk-read private references or full paper folders. Use helpers such as:
+
+    search_references "query terms"
+
+Then inspect only the files that are relevant.
+
+### Reasoning level policy
+
+Use lower reasoning for small tasks and higher reasoning for hard tasks.
+
+    Low:
+      simple command, README edit, small explanation
+
+    Medium:
+      script writing, one failing test, moderate refactor
+
+    High:
+      package audit, Slurm debugging, statistical method review
+
+    Extra high:
+      deep literature synthesis, derivation audit, research design
+
+Do not use maximum reasoning for every task.
+
+### Planning policy
+
+Use plan-first for complex or ambiguous work:
+
+- package refactors
+- multi-file changes
+- method audits
+- simulation studies
+- HPC workflow redesign
+- literature synthesis
+
+Do not use plan-first for tiny edits or one-command fixes.
+
+### Operating principle
+
+High-quality Codex output comes from structured context, not maximum context.
+
+Use:
+
+    small AGENTS.md
+    precise skill descriptions
+    focused skill bodies
+    search-before-read scripts
+    targeted command output
+    plan-first for complex tasks
+    reasoning level matched to difficulty
+    short verification loops
+    small commits
