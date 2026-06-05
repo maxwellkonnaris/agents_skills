@@ -1,0 +1,259 @@
+<section class="agents-skills-demo">
+  <button class="agents-skills-open" type="button" data-agents-modal-open>
+    How this repo works
+  </button>
+
+  <div class="agents-skills-modal" data-agents-modal hidden>
+    <div class="agents-skills-backdrop" data-agents-modal-close></div>
+
+    <div
+      class="agents-skills-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="agents-skills-title"
+    >
+      <button class="agents-skills-close" type="button" data-agents-modal-close aria-label="Close tutorial">
+        ×
+      </button>
+
+      <p class="agents-skills-kicker">agents_skills tutorial</p>
+      <h2 id="agents-skills-title">Layer your agent instructions</h2>
+
+      <div class="agents-skills-step is-active" data-agents-step>
+        <h3>1. Prompt</h3>
+        <p>The prompt is for the immediate task: the goal, context, constraints, and done-when criteria.</p>
+      </div>
+
+      <div class="agents-skills-step" data-agents-step>
+        <h3>2. AGENTS.md</h3>
+        <p>AGENTS.md is for stable behavior that should apply almost every time: safety, style, Git rules, scientific reasoning, and verification habits.</p>
+      </div>
+
+      <div class="agents-skills-step" data-agents-step>
+        <h3>3. Skills</h3>
+        <p>Skills are focused workflows. Use them for repeated tasks like Slurm debugging, R package review, statistical learning, or scientific writing.</p>
+      </div>
+
+      <div class="agents-skills-step" data-agents-step>
+        <h3>4. Scripts</h3>
+        <p>Scripts are deterministic helpers. Use them when a command should be reliable, reusable, and easy to inspect.</p>
+      </div>
+
+      <div class="agents-skills-step" data-agents-step>
+        <h3>5. Rule of thumb</h3>
+        <p>If it is broad behavior, put it in AGENTS.md. If it is a repeated workflow, make it a skill. If it is executable, make it a script.</p>
+      </div>
+
+      <div class="agents-skills-progress" aria-live="polite">
+        <span data-agents-step-label>Step 1 of 5</span>
+      </div>
+
+      <div class="agents-skills-actions">
+        <button type="button" data-agents-prev>Back</button>
+        <button type="button" data-agents-next>Next</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .agents-skills-demo {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  .agents-skills-open,
+  .agents-skills-actions button {
+    border: 1px solid #111827;
+    border-radius: 999px;
+    background: #111827;
+    color: #ffffff;
+    padding: 0.75rem 1rem;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .agents-skills-actions button:first-child {
+    background: #ffffff;
+    color: #111827;
+  }
+
+  .agents-skills-modal[hidden],
+  .agents-skills-step {
+    display: none;
+  }
+
+  .agents-skills-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+  }
+
+  .agents-skills-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.64);
+  }
+
+  .agents-skills-dialog {
+    position: relative;
+    width: min(92vw, 560px);
+    margin: 10vh auto 0;
+    border-radius: 24px;
+    background: #ffffff;
+    color: #111827;
+    padding: 2rem;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+  }
+
+  .agents-skills-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    border: 0;
+    background: transparent;
+    font-size: 1.75rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .agents-skills-kicker {
+    margin: 0 0 0.5rem;
+    color: #6b7280;
+    font-size: 0.875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .agents-skills-dialog h2 {
+    margin: 0 2rem 1rem 0;
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    line-height: 1.05;
+  }
+
+  .agents-skills-step.is-active {
+    display: block;
+  }
+
+  .agents-skills-step h3 {
+    margin: 1.5rem 0 0.5rem;
+    font-size: 1.125rem;
+  }
+
+  .agents-skills-step p {
+    margin: 0;
+    color: #374151;
+    line-height: 1.6;
+  }
+
+  .agents-skills-progress {
+    margin-top: 1.5rem;
+    color: #6b7280;
+    font-size: 0.9rem;
+  }
+
+  .agents-skills-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+
+  @media (max-width: 520px) {
+    .agents-skills-dialog {
+      margin-top: 4vh;
+      padding: 1.25rem;
+    }
+
+    .agents-skills-actions {
+      flex-direction: column-reverse;
+    }
+
+    .agents-skills-actions button {
+      width: 100%;
+    }
+  }
+</style>
+
+<script>
+  (() => {
+    const modal = document.querySelector("[data-agents-modal]");
+    const openButton = document.querySelector("[data-agents-modal-open]");
+    const closeButtons = document.querySelectorAll("[data-agents-modal-close]");
+    const steps = Array.from(document.querySelectorAll("[data-agents-step]"));
+    const prevButton = document.querySelector("[data-agents-prev]");
+    const nextButton = document.querySelector("[data-agents-next]");
+    const stepLabel = document.querySelector("[data-agents-step-label]");
+
+    if (!modal || !openButton || steps.length === 0 || !prevButton || !nextButton || !stepLabel) {
+      return;
+    }
+
+    let stepIndex = 0;
+
+    const render = () => {
+      steps.forEach((step, index) => {
+        step.classList.toggle("is-active", index === stepIndex);
+      });
+
+      stepLabel.textContent = `Step ${stepIndex + 1} of ${steps.length}`;
+      prevButton.disabled = stepIndex === 0;
+      nextButton.textContent = stepIndex === steps.length - 1 ? "Finish" : "Next";
+    };
+
+    const openModal = () => {
+      modal.hidden = false;
+      stepIndex = 0;
+      render();
+      nextButton.focus();
+      document.body.style.overflow = "hidden";
+    };
+
+    const closeModal = () => {
+      modal.hidden = true;
+      document.body.style.overflow = "";
+      openButton.focus();
+    };
+
+    openButton.addEventListener("click", openModal);
+
+    closeButtons.forEach((button) => {
+      button.addEventListener("click", closeModal);
+    });
+
+    prevButton.addEventListener("click", () => {
+      stepIndex = Math.max(0, stepIndex - 1);
+      render();
+    });
+
+    nextButton.addEventListener("click", () => {
+      if (stepIndex === steps.length - 1) {
+        closeModal();
+        return;
+      }
+
+      stepIndex += 1;
+      render();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (modal.hidden) {
+        return;
+      }
+
+      if (event.key === "Escape") {
+        closeModal();
+      }
+
+      if (event.key === "ArrowRight") {
+        nextButton.click();
+      }
+
+      if (event.key === "ArrowLeft") {
+        prevButton.click();
+      }
+    });
+
+    render();
+  })();
+</script>
