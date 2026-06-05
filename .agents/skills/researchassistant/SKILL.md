@@ -300,6 +300,47 @@ Do not modify files before identifying which files are relevant, unless the user
 
 ---
 
+## Reproducibility Stack Audit
+
+When a computational, statistical, simulation, bioinformatics, genomics, machine-learning, or data-analysis project may need better reproducibility, audit the reproducibility stack before adding tools.
+
+Inspect, when relevant:
+
+- Git status and tracked/untracked files
+- dependency files such as `requirements.txt`, `pyproject.toml`, `environment.yml`, `renv.lock`, `DESCRIPTION`, or `DESCRIPTION`/`NAMESPACE` for R packages
+- existing Dockerfile, `.dockerignore`, Apptainer/Singularity definition files, or container run scripts
+- existing DVC files such as `.dvc/`, `dvc.yaml`, `dvc.lock`, `params.yaml`, or `*.dvc`
+- existing MLflow use such as `mlruns/`, `MLFLOW_TRACKING_URI`, or `mlflow` imports
+- data directories, model directories, result directories, logs, reports, and temporary/cache directories
+- main executable scripts and configuration files
+- whether the project is local-only, HPC-oriented, cloud-oriented, or intended for collaborators
+
+Use this responsibility split:
+
+- Git tracks source code, configuration files, documentation, tests, lightweight metadata, Dockerfiles, Apptainer definition files, and DVC metadata.
+- Docker defines the local or cloud containerized software environment.
+- Apptainer/Singularity runs containerized environments on HPC.
+- DVC tracks large or important data, model artifacts, simulation outputs, benchmark outputs, and other files that should not live directly in Git.
+- MLflow tracks individual runs: parameters, metrics, diagnostic plots, artifacts, runtime metadata, Git commit, DVC status when available, and container image tag when available.
+
+Do not add Docker, Apptainer, DVC, or MLflow blindly.
+
+Prefer the smallest useful reproducibility setup.
+
+Add Docker/Apptainer when the software environment matters or the project must run across laptop, HPC, cloud, or collaborators.
+
+Add DVC when data, models, simulations, or generated outputs are important for reproduction but too large or inappropriate for Git.
+
+Add MLflow when there are repeated experiments, simulations, model fits, seeds, priors, hyperparameters, metrics, or diagnostics to compare.
+
+Do not use MLflow as the only durable record of an experiment.
+
+Do not use DVC for temporary caches, unimportant intermediates, secrets, credentials, or files already properly managed elsewhere.
+
+Do not configure DVC cloud remotes, push data, or upload artifacts unless explicitly asked.
+
+---
+
 ## Step Planning Rule
 
 Plan only the next useful step, not an entire uncontrolled pipeline.
@@ -467,7 +508,53 @@ For each analysis output, follow these rules:
 - text in each plot should be big and readable, no titles or subtitles.
 - studies should be organized into one specific study directory with subdirectories organizing each of the inputs, outputs, code, etc.
 - study versions should be the first subdirectory which is named by date and have a text file explaining analysis.
- 
+
+---
+
+## Preferred Reproducible Project Layout
+
+Preserve the existing project structure unless the user asks for reorganization or the change is small and clearly justified.
+
+For new computational projects, prefer this structure when appropriate:
+
+```text
+project/
+  README.md
+  AGENTS.md
+  .gitignore
+  configs/
+  data/
+    raw/
+    processed/
+  src/
+  scripts/
+  analysis/
+    code/
+    plots/
+    tables/
+    logs/
+  models/
+  results/
+  reports/
+  tests/
+  docs/
+```
+
+Use src/ for reusable source code.
+Use scripts/ for executable project scripts.
+Use analysis/code/ for one-off analysis code tied to a specific study version.
+Use configs/ instead of hard-coding parameters inside scripts.
+Use data/raw/ for immutable raw inputs.
+Use data/processed/ for reproducibly generated processed inputs.
+Use models/ for fitted models or serialized model artifacts.
+Use results/ for durable analysis outputs.
+Use analysis/plots/ or results/plots/ for figures.
+Use analysis/tables/ or results/tables/ for generated tables.
+Use analysis/logs/, logs/, or the existing project log directory for logs.
+For new outputs, prefer dated directories under analysis/ or results/ when outputs may be rerun, compared, or versioned.
+Do not move existing files into this structure unless asked.
+Do not create extra documentation files merely to record that work happened.
+
 ---
 
 ## Reporting Without File Bloat
@@ -502,3 +589,4 @@ Errors/warnings:
 Interpretation boundary:
 Suggested next step:
 Question for user:
+```
