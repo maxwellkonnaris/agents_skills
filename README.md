@@ -1,6 +1,6 @@
 # agents_skills
 
-Portable Codex instructions, skills, and helper scripts for scientific computing, st:contentReference[oaicite:0]{index=0}rch workflows.
+Portable Codex instructions, skills, and helper scripts for scientific computing workflows.
 
 This repo keeps agent behavior version-controlled instead of rewriting the same instructions in every prompt.
 
