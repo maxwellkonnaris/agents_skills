@@ -21,6 +21,15 @@
 
 ## Code style
 
+- For newly generated code deliverables, default to a Jupyter notebook (`.ipynb`)
+  or R Markdown document (`.Rmd`). Use R Markdown for R-first work and a
+  Jupyter notebook for Python-first or mixed-language work.
+- Do not create standalone analysis scripts (`.R`, `.py`, `.sh`, or similar)
+  unless the user explicitly asks for a script.
+- Slurm/HPC job-submission, launcher, and worker scripts are an exception when
+  scripts are required to execute the requested cluster workflow.
+- Preserve and edit native source files when the user explicitly places an
+  existing script, package, application, or library source file in scope.
 - Prefer full drop-in files when explicitly requested.
 - Do not add decorative comment blocks.
 - Do not add excessive comments.
@@ -57,7 +66,9 @@
     docs/
 
 - Keep source code in src/ when the project is becoming reusable.
-- Keep one-off analysis scripts in analysis/code/ or scripts/.
+- Keep one-off analysis notebooks and R Markdown documents in analysis/code/.
+- Use scripts/ only for explicitly requested scripts or required HPC execution
+  files.
 - Keep configuration files in configs/ instead of hard-coding parameters inside scripts.
 - Keep generated plots under analysis/plots/ or results/plots/.
 - Keep generated tables under analysis/tables/ or results/tables/.
@@ -126,3 +137,47 @@
 - Provide the smallest smoke-test command.
 - Provide expected output for the smoke test.
 - Do not claim reproducibility unless the smoke test was run or clearly marked as not run.
+
+
+<!-- headroom:rtk-instructions -->
+# RTK (Rust Token Killer) - Token-Optimized Commands
+
+When running shell commands, **always prefix with `rtk`**. This reduces context
+usage by 60-90% with zero behavior change. If rtk has no filter for a command,
+it passes through unchanged — so it is always safe to use.
+
+## Key Commands
+```bash
+# Git (59-80% savings)
+rtk git status          rtk git diff            rtk git log
+
+# Files & Search (60-75% savings)
+rtk ls <path>           rtk read <file>         rtk grep <pattern>
+rtk find <pattern>      rtk diff <file>
+
+# Test (90-99% savings) — shows failures only
+rtk pytest tests/       rtk cargo test          rtk test <cmd>
+
+# Build & Lint (80-90% savings) — shows errors only
+rtk tsc                 rtk lint                rtk cargo build
+rtk prettier --check    rtk mypy                rtk ruff check
+
+# Analysis (70-90% savings)
+rtk err <cmd>           rtk log <file>          rtk json <file>
+rtk summary <cmd>       rtk deps                rtk env
+
+# GitHub (26-87% savings)
+rtk gh pr view <n>      rtk gh run list         rtk gh issue list
+
+# Infrastructure (85% savings)
+rtk docker ps           rtk kubectl get         rtk docker logs <c>
+
+# Package managers (70-90% savings)
+rtk pip list            rtk pnpm install        rtk npm run <script>
+```
+
+## Rules
+- In command chains, prefix each segment: `rtk git add . && rtk git commit -m "msg"`
+- For debugging, use raw command without rtk prefix
+- `rtk proxy <cmd>` runs command without filtering but tracks usage
+<!-- /headroom:rtk-instructions -->

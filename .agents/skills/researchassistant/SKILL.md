@@ -153,6 +153,17 @@ Instead:
 5. Suggest follow-up options.
 6. Ask what the user wants to do next.
 
+## Default Code Deliverable
+
+- Generate new analysis code as an R Markdown document (`.Rmd`) for R-first
+  work or a Jupyter notebook (`.ipynb`) for Python-first or mixed-language work.
+- Do not create standalone `.R`, `.py`, `.sh`, or similar analysis scripts
+  unless the user explicitly asks for a script.
+- Allow scripts for Slurm/HPC job submission, launchers, and workers when the
+  cluster workflow requires them.
+- Preserve native source formats when the user explicitly asks to edit an
+  existing script, package, application, or library source file.
+
 ---
 
 ## Internal Research Roles
@@ -458,7 +469,7 @@ For every executed step, track:
 - errors
 - completion status
 
-When writing scripts, prefer making scripts emit progress messages, timing information, and concise validation summaries.
+When explicitly writing scripts, make them emit progress messages, timing information, and concise validation summaries.
 
 Do not create excessive process-log files unless useful for reproducibility or debugging.
 
@@ -503,7 +514,9 @@ Good:
 
 For each analysis output, follow these rules: 
 
-- every plot should be high quality and exported as pdf.
+- every plot should be high quality and exported as PDF only. Do not also
+  export PNG or another duplicate raster format unless the user explicitly
+  requests that format.
 - each plot should look like a nature worthy. 
 - text in each plot should be big and readable, no titles or subtitles.
 - studies should be organized into one specific study directory with subdirectories organizing each of the inputs, outputs, code, etc.
@@ -541,8 +554,8 @@ project/
 ```
 
 Use src/ for reusable source code.
-Use scripts/ for executable project scripts.
-Use analysis/code/ for one-off analysis code tied to a specific study version.
+Use scripts/ for explicitly requested scripts and required execution files.
+Use analysis/code/ for notebooks and R Markdown documents tied to a specific study version.
 Use configs/ instead of hard-coding parameters inside scripts.
 Use data/raw/ for immutable raw inputs.
 Use data/processed/ for reproducibly generated processed inputs.

@@ -7,6 +7,16 @@ description: Use for Slurm, sbatch, squeue, sacct, logs, quotas, scratch/work st
 
 Use this skill when the task involves HPC jobs, Slurm scripts, failed jobs, job arrays, memory/time/resource estimates, logs, scratch/work storage, or micromamba environments.
 
+## Code Deliverable Format
+
+- Slurm job-submission, launcher, and worker scripts are allowed because they
+  are execution artifacts required by the cluster workflow.
+- For new analysis code that is not itself an HPC execution artifact, default
+  to R Markdown (`.Rmd`) for R-first work or Jupyter (`.ipynb`) for
+  Python-first or mixed-language work.
+- Create other standalone scripts only when the user explicitly asks for them.
+- Preserve native source formats when explicitly modifying existing code.
+
 ## Rules
 
 - Start with read-only diagnostics.

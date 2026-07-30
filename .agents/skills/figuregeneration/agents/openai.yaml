@@ -1,0 +1,4 @@
+interface:
+  display_name: "Figure Generation"
+  short_description: "Design publication-ready scientific figures"
+  default_prompt: "Use $figuregeneration to create or revise a publication-ready scientific figure and validate the rendered output."
